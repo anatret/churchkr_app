@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "128821308227",
+    "project_id": "churchk",
+    "storage_bucket": "churchk.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:128821308227:android:cb5e989b81d18c2b579df6",
+        "android_client_info": {
+          "package_name": "com.anatret.churchkr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZ6pDOEWjM3KwHjsNov3DUc5B1BJ9C6U4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
