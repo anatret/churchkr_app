@@ -28,19 +28,41 @@ class AzbykaImage {
   final String url;
 }
 
+class AzbykaHoliday {
+  const AzbykaHoliday({
+    required this.title,
+    this.text,
+    this.url,
+  });
+
+  final String title;
+  final String? text;
+  final String? url;
+}
+
 class AzbykaDay {
   const AzbykaDay({
     required this.dateLabel,
     required this.fasting,
+    this.week,
+    this.tone,
+    this.fastingNote,
+    this.description,
     required this.images,
     required this.saints,
+    required this.holidays,
     required this.texts,
   });
 
   final String dateLabel;
   final bool fasting;
+  final String? week;
+  final String? tone;
+  final String? fastingNote;
+  final String? description;
   final List<AzbykaImage> images;
   final List<AzbykaSaint> saints;
+  final List<AzbykaHoliday> holidays;
   final List<AzbykaText> texts;
 }
 

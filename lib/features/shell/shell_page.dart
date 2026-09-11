@@ -1,8 +1,9 @@
+import 'package:churchkr/core/theme.dart';
 import 'package:churchkr/features/clergy/clergy_page.dart';
 import 'package:churchkr/features/home/home_page.dart';
 import 'package:churchkr/features/parishes/parishes_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:churchkr/l10n/app_localizations.dart';
 
 class ShellPage extends StatefulWidget {
   const ShellPage({super.key});
@@ -23,6 +24,7 @@ class _ShellPageState extends State<ShellPage> {
       ClergyPage(),
     ];
     return Scaffold(
+      backgroundColor: ChurchColors.background,
       body: IndexedStack(index: _index, children: pages),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,

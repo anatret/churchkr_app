@@ -68,6 +68,7 @@ class AzbykaClient {
         fasting: false,
         images: const [],
         saints: const [],
+        holidays: const [],
         texts: const [],
       );
     }
@@ -91,8 +92,13 @@ class AzbykaClient {
     return AzbykaDay(
       dateLabel: parsed.dateLabel.isEmpty ? dateKey : parsed.dateLabel,
       fasting: parsed.fasting,
+      week: parsed.week,
+      tone: parsed.tone,
+      fastingNote: parsed.fastingNote,
+      description: parsed.description,
       images: parsed.images,
       saints: parsed.saints,
+      holidays: _parseHolidays(abstractDate['holidays']),
       texts: texts,
     );
   }
@@ -117,9 +123,40 @@ class AzbykaClient {
     );
   }
 
+  List<AzbykaHoliday> _parseHolidays(dynamic raw) {
+    if (raw is! List) return const [];
+    final holidays = <AzbykaHoliday>[];
+    for (final item in raw) {
+      if (item is String) {
+        final title = item.trim();
+        if (title.isNotEmpty) holidays.add(AzbykaHoliday(title: title));
+        continue;
+      }
+      if (item is! Map) continue;
+      final map = item.cast<String, dynamic>();
+      final title = (map['title'] as String?) ??
+          (map['name'] as String?) ??
+          (map['cacheTitle'] as String?) ??
+          '';
+      if (title.trim().isEmpty) continue;
+      holidays.add(
+        AzbykaHoliday(
+          title: title.trim(),
+          text: map['text'] as String?,
+          url: map['url'] as String? ?? map['uri'] as String?,
+        ),
+      );
+    }
+    return holidays;
+  }
+
   ({
     String dateLabel,
     bool fasting,
+    String? week,
+    String? tone,
+    String? fastingNote,
+    String? description,
     List<AzbykaImage> images,
     List<AzbykaSaint> saints,
   }) _parsePresentations(Map<String, dynamic> data) {
@@ -155,14 +192,52 @@ class AzbykaClient {
     }
 
     final date = RegExp(r'(\d{1,2}\s+[а-яА-ЯёЁ]+\s+\d{4})').firstMatch(html);
-    final fasting = html.contains('class="fasting-message"') &&
-        !html.contains('fasting-message"></div>');
+    final week = _firstHtmlText(html, [
+      r'class="[^"]*week[^"]*"[^>]*>([^<]+)',
+      r'(Седмица[^<]{3,80})',
+      r'(Неделя[^<]{3,80})',
+    ]);
+    final tone = _firstHtmlText(html, [
+      r'(Глас\s+[^\s<,]+)',
+      r'class="[^"]*glas[^"]*"[^>]*>([^<]+)',
+    ]);
+    final fastingNote = _firstHtmlText(html, [
+      r'fasting-message[^>]*>([^<]+)',
+      r'class="[^"]*fasting[^"]*"[^>]*>([^<]+)',
+    ]);
+    final fasting = (fastingNote != null && fastingNote.isNotEmpty) ||
+        (html.contains('class="fasting-message"') &&
+            !html.contains('fasting-message"></div>'));
+    final descriptionParts = <String>[
+      if (week != null) week,
+      if (tone != null) tone,
+      if (fastingNote != null && fastingNote.toLowerCase() != 'пост')
+        fastingNote,
+    ];
+
     return (
       dateLabel: date?.group(1) ?? '',
       fasting: fasting,
+      week: week,
+      tone: tone,
+      fastingNote: fastingNote,
+      description: descriptionParts.isEmpty ? null : descriptionParts.join('. '),
       images: images,
       saints: saints,
     );
+  }
+
+  String? _firstHtmlText(String html, List<String> patterns) {
+    for (final pattern in patterns) {
+      final match =
+          RegExp(pattern, caseSensitive: false, dotAll: true).firstMatch(html);
+      final value = (match?.group(1) ?? '')
+          .replaceAll(RegExp(r'<[^>]+>'), ' ')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      if (value.isNotEmpty) return value;
+    }
+    return null;
   }
 }
 

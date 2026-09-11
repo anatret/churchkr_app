@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class LanguageSwitcher extends StatelessWidget {
-  const LanguageSwitcher({super.key});
+  const LanguageSwitcher({super.key, this.compact = false});
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +17,9 @@ class LanguageSwitcher extends StatelessWidget {
       (Locale('en'), 'English'),
     ];
     return Padding(
-      padding: const EdgeInsets.only(top: 12, right: 12),
+      padding: compact
+          ? EdgeInsets.zero
+          : const EdgeInsets.only(top: 12, right: 12),
       child: Align(
         alignment: Alignment.topRight,
         child: Material(
@@ -57,14 +61,21 @@ class BackdropScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/back7.jpeg'),
-            fit: BoxFit.cover,
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/back7.jpeg'),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: SizedBox.expand(),
           ),
-        ),
-        child: SafeArea(child: child),
+          SafeArea(child: child),
+        ],
       ),
     );
   }

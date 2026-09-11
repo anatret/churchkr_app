@@ -3,7 +3,7 @@ import 'package:churchkr/core/theme.dart';
 import 'package:churchkr/data/content_catalog.dart';
 import 'package:churchkr/features/widgets/chrome.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:churchkr/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ClergyPage extends StatelessWidget {

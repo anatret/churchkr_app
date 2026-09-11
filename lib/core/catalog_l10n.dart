@@ -1,4 +1,4 @@
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:churchkr/l10n/app_localizations.dart';
 
 String catalogText(AppLocalizations l10n, String key) {
   switch (key) {
