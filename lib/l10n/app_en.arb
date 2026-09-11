@@ -8,6 +8,18 @@
   "saints": "Saints",
   "textsOfTheDay": "Readings of the day",
   "calendar": "Calendar",
+  "orthodoxCalendar": "Orthodox Church Calendar",
+  "oldStyle": "Old calendar",
+  "newStyle": "New calendar",
+  "yesterday": "Yesterday",
+  "tomorrow": "Tomorrow",
+  "fastingDay": "Fasting day",
+  "toneNumber": "Tone {number}",
+  "@toneNumber": {
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
   "todayEvents": "Today",
   "icons": "Icons",
   "dayDescription": "The day",

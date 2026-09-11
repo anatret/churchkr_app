@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:churchkr/core/theme.dart';
 import 'package:churchkr/data/azbyka_client.dart';
+import 'package:churchkr/data/azbyka_day_parser.dart';
 import 'package:churchkr/data/models.dart';
 import 'package:churchkr/features/widgets/chrome.dart';
 import 'package:churchkr/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -82,10 +84,14 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    l10n.calendar,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                    l10n.orthodoxCalendar,
+                    style: GoogleFonts.cormorantGaramond(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: ChurchColors.primaryText,
+                      height: 1.1,
+                    ),
                   ),
                 ),
                 const LanguageSwitcher(compact: true),
@@ -97,33 +103,15 @@ class _HomePageState extends State<HomePage> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
               children: [
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 440),
-                    child: _GlassCard(
-                      child: _MonthCalendar(
-                        visibleMonth: _visibleMonth,
-                        selected: _selected,
-                        onMonthChanged: (month) {
-                          setState(() => _visibleMonth = month);
-                        },
-                        onSelect: _selectDay,
-                      ),
-                    ),
-                  ),
-                ),
                 if (_error != null && _day == null) ...[
-                  const SizedBox(height: 16),
                   _GlassCard(child: Text(l10n.connectionError)),
-                ] else if (_day != null) ...[
                   const SizedBox(height: 16),
-                  _DayHeader(date: _selected, day: _day!),
-                  if (_day!.images.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    _SectionLabel(l10n.icons),
-                    const SizedBox(height: 8),
-                    _IconsCarousel(images: _day!.images),
-                  ],
+                ] else if (_day != null) ...[
+                  _CalendarHero(
+                    date: _selected,
+                    day: _day!,
+                    onSelect: _selectDay,
+                  ),
                   const SizedBox(height: 16),
                   _SectionLabel(l10n.todayEvents),
                   const SizedBox(height: 8),
@@ -141,10 +129,27 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 16),
                 ] else if (_loading) ...[
                   const SizedBox(height: 48),
                   const Center(child: CircularProgressIndicator()),
+                  const SizedBox(height: 16),
                 ],
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: _GlassCard(
+                      child: _MonthCalendar(
+                        visibleMonth: _visibleMonth,
+                        selected: _selected,
+                        onMonthChanged: (month) {
+                          setState(() => _visibleMonth = month);
+                        },
+                        onSelect: _selectDay,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -155,12 +160,6 @@ class _HomePageState extends State<HomePage> {
 
   String? _description(AzbykaDay day) {
     final parts = <String>[
-      if (day.week != null && day.week!.isNotEmpty) day.week!,
-      if (day.tone != null && day.tone!.isNotEmpty) day.tone!,
-      if (day.fastingNote != null &&
-          day.fastingNote!.isNotEmpty &&
-          day.fastingNote!.toLowerCase() != 'пост')
-        day.fastingNote!,
       for (final holiday in day.holidays)
         if (stripHtml(holiday.text).length > 80) stripHtml(holiday.text),
     ];
@@ -206,55 +205,141 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _DayHeader extends StatelessWidget {
-  const _DayHeader({required this.date, required this.day});
+class _CalendarHero extends StatelessWidget {
+  const _CalendarHero({
+    required this.date,
+    required this.day,
+    required this.onSelect,
+  });
 
   final DateTime date;
   final AzbykaDay day;
+  final ValueChanged<DateTime> onSelect;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final locale = l10n.localeName;
-    final weekday = DateFormat.EEEE(locale).format(date);
-    final title = day.dateLabel.isNotEmpty
-        ? day.dateLabel
-        : DateFormat.yMMMMd(locale).format(date);
+    final julian = julianDateOf(date);
+    final weekday = DateFormat.EEEE(locale).format(date).toUpperCase();
+    final oldLabel = DateFormat('d MMMM', locale).format(julian);
+    final newLabel = DateFormat('d MMMM', locale).format(date);
+    final yesterday = date.subtract(const Duration(days: 1));
+    final tomorrow = date.add(const Duration(days: 1));
+    final weekColor = _colorFromHex(day.weekColor) ?? const Color(0xFFFF4500);
+    final featured = day.holidays.isEmpty ? null : day.holidays.first;
+    final notes = <String>[
+      if (day.fasting) l10n.fastingDay,
+      if (day.fastingNote != null &&
+          day.fastingNote!.isNotEmpty &&
+          day.fastingNote!.toLowerCase() != 'пост')
+        day.fastingNote!,
+      if (day.tone != null) l10n.toneNumber(day.tone!),
+    ];
 
     return _GlassCard(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            weekday[0].toUpperCase() + weekday.substring(1),
-            style: const TextStyle(
-              color: ChurchColors.secondaryText,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  height: 1.15,
+          if (day.images.isNotEmpty) ...[
+            _IconRow(images: day.images),
+            const SizedBox(height: 16),
+          ],
+          Row(
+            children: [
+              _DateNavButton(
+                label: l10n.yesterday,
+                date: yesterday,
+                onTap: () => onSelect(yesterday),
+              ),
+              Expanded(
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StyleDate(
+                            caption: l10n.oldStyle,
+                            value: oldLabel,
+                            align: TextAlign.right,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: FittedBox(
+                            child: Text(
+                              weekday,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.cormorantGaramond(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1.2,
+                                color: ChurchColors.primaryText,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: _StyleDate(
+                            caption: l10n.newStyle,
+                            value: newLabel,
+                            align: TextAlign.left,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
+              ),
+              _DateNavButton(
+                label: l10n.tomorrow,
+                date: tomorrow,
+                onTap: () => onSelect(tomorrow),
+                trailing: true,
+              ),
+            ],
           ),
-          if (day.fasting) ...[
+          if (day.week != null && day.week!.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: ChurchColors.alternate,
-                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: weekColor, width: 1.4),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                day.fastingNote?.isNotEmpty == true
-                    ? day.fastingNote!
-                    : l10n.fasting,
-                style: const TextStyle(
-                  color: ChurchColors.primary,
+                day.week!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: weekColor,
                   fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+          if (notes.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              notes.join('. '),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFF2B6CB0),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          if (featured != null) ...[
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: featured.url == null || featured.url!.isEmpty
+                  ? null
+                  : () => _openUrl(featured.url!),
+              child: Text(
+                featured.title.toUpperCase(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFFE53E3E),
+                  fontWeight: FontWeight.w800,
+                  height: 1.35,
                 ),
               ),
             ),
@@ -263,6 +348,158 @@ class _DayHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+class _StyleDate extends StatelessWidget {
+  const _StyleDate({
+    required this.caption,
+    required this.value,
+    required this.align,
+  });
+
+  final String caption;
+  final String value;
+  final TextAlign align;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: align == TextAlign.right
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
+      children: [
+        Text(
+          caption,
+          textAlign: align,
+          style: const TextStyle(
+            fontSize: 11,
+            color: ChurchColors.secondaryText,
+          ),
+        ),
+        Text(
+          value,
+          textAlign: align,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: ChurchColors.primaryText,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DateNavButton extends StatelessWidget {
+  const _DateNavButton({
+    required this.label,
+    required this.date,
+    required this.onTap,
+    this.trailing = false,
+  });
+
+  final String label;
+  final DateTime date;
+  final VoidCallback onTap;
+  final bool trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final stamp = DateFormat('dd.MM').format(date);
+    final children = [
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: ChurchColors.primary,
+        ),
+      ),
+      Text(
+        stamp,
+        style: const TextStyle(
+          fontSize: 11,
+          color: ChurchColors.secondaryText,
+        ),
+      ),
+    ];
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        child: Column(
+          crossAxisAlignment:
+              trailing ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: children,
+        ),
+      ),
+    );
+  }
+}
+
+class _IconRow extends StatelessWidget {
+  const _IconRow({required this.images});
+
+  final List<AzbykaImage> images;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 132,
+      child: Row(
+        children: [
+          for (var i = 0; i < images.length && i < 3; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            Expanded(child: _IconThumb(image: images[i])),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _IconThumb extends StatelessWidget {
+  const _IconThumb({required this.image});
+
+  final AzbykaImage image;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => _IconViewer(image: image),
+        ),
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFC4A574), width: 1.2),
+        ),
+        child: CachedNetworkImage(
+          imageUrl: image.url,
+          fit: BoxFit.cover,
+          height: 132,
+          placeholder: (context, url) => const Center(
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          errorWidget: (context, url, error) =>
+              const Icon(Icons.image_not_supported_outlined),
+        ),
+      ),
+    );
+  }
+}
+
+Color? _colorFromHex(String? hex) {
+  if (hex == null || hex.isEmpty) return null;
+  final value = hex.replaceFirst('#', '');
+  if (value.length != 6) return null;
+  return Color(int.parse('FF$value', radix: 16));
+}
+
+Future<void> _openUrl(String url) {
+  return launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
 }
 
 class _MonthCalendar extends StatelessWidget {
@@ -430,122 +667,6 @@ class _DayCell extends StatelessWidget {
   }
 }
 
-class _IconsCarousel extends StatefulWidget {
-  const _IconsCarousel({required this.images});
-
-  final List<AzbykaImage> images;
-
-  @override
-  State<_IconsCarousel> createState() => _IconsCarouselState();
-}
-
-class _IconsCarouselState extends State<_IconsCarousel> {
-  final _controller = PageController(viewportFraction: 0.86);
-  int _page = 0;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          height: 260,
-          child: PageView.builder(
-            controller: _controller,
-            itemCount: widget.images.length,
-            onPageChanged: (value) => setState(() => _page = value),
-            itemBuilder: (context, index) {
-              final image = widget.images[index];
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: GestureDetector(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => _IconViewer(image: image),
-                    ),
-                  ),
-                  child: _GlassCard(
-                    padding: EdgeInsets.zero,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(22),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          CachedNetworkImage(
-                            imageUrl: image.url,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                            errorWidget: (context, url, error) =>
-                                const Icon(Icons.image_not_supported_outlined),
-                          ),
-                          if (image.title.isNotEmpty)
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Colors.transparent,
-                                      Color(0xCC1A365D),
-                                    ],
-                                  ),
-                                ),
-                                child: Text(
-                                  image.title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        if (widget.images.length > 1) ...[
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (var i = 0; i < widget.images.length; i++)
-                Container(
-                  width: i == _page ? 16 : 6,
-                  height: 6,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  decoration: BoxDecoration(
-                    color: i == _page
-                        ? ChurchColors.primary
-                        : ChurchColors.tertiary,
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-}
-
 class _EventsCard extends StatelessWidget {
   const _EventsCard({required this.day});
 
@@ -583,14 +704,7 @@ class _EventsCard extends StatelessWidget {
               }(),
               onTap: holiday.url == null || holiday.url!.isEmpty
                   ? null
-                  : () => launchUrl(
-                        Uri.parse(
-                          holiday.url!.startsWith('http')
-                              ? holiday.url!
-                              : 'https://azbyka.ru${holiday.url}',
-                        ),
-                        mode: LaunchMode.externalApplication,
-                      ),
+                  : () => _openUrl(holiday.url!),
             ),
           if (holidays.isNotEmpty && saints.isNotEmpty)
             const Divider(height: 8, indent: 16, endIndent: 16),
@@ -602,6 +716,9 @@ class _EventsCard extends StatelessWidget {
               subtitle: saint.year == null || saint.year!.isEmpty
                   ? null
                   : Text(saint.year!),
+              onTap: saint.url == null || saint.url!.isEmpty
+                  ? null
+                  : () => _openUrl(saint.url!),
             ),
         ],
       ),

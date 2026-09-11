@@ -34,6 +34,29 @@ class AppLocalizationsKo extends AppLocalizations {
   String get calendar => '달력';
 
   @override
+  String get orthodoxCalendar => '정교회 교회력';
+
+  @override
+  String get oldStyle => '구력';
+
+  @override
+  String get newStyle => '신력';
+
+  @override
+  String get yesterday => '어제';
+
+  @override
+  String get tomorrow => '내일';
+
+  @override
+  String get fastingDay => '단식일';
+
+  @override
+  String toneNumber(int number) {
+    return '제$number조';
+  }
+
+  @override
   String get todayEvents => '오늘';
 
   @override

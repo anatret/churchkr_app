@@ -34,6 +34,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get calendar => 'Calendar';
 
   @override
+  String get orthodoxCalendar => 'Orthodox Church Calendar';
+
+  @override
+  String get oldStyle => 'Old calendar';
+
+  @override
+  String get newStyle => 'New calendar';
+
+  @override
+  String get yesterday => 'Yesterday';
+
+  @override
+  String get tomorrow => 'Tomorrow';
+
+  @override
+  String get fastingDay => 'Fasting day';
+
+  @override
+  String toneNumber(int number) {
+    return 'Tone $number';
+  }
+
+  @override
   String get todayEvents => 'Today';
 
   @override

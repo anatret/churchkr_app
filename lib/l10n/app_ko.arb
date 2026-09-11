@@ -8,6 +8,18 @@
   "saints": "성인",
   "textsOfTheDay": "오늘의 독서",
   "calendar": "달력",
+  "orthodoxCalendar": "정교회 교회력",
+  "oldStyle": "구력",
+  "newStyle": "신력",
+  "yesterday": "어제",
+  "tomorrow": "내일",
+  "fastingDay": "단식일",
+  "toneNumber": "제{number}조",
+  "@toneNumber": {
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
   "todayEvents": "오늘",
   "icons": "이콘",
   "dayDescription": "오늘의 설명",

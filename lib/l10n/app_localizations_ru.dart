@@ -34,6 +34,29 @@ class AppLocalizationsRu extends AppLocalizations {
   String get calendar => 'Календарь';
 
   @override
+  String get orthodoxCalendar => 'Православный церковный календарь';
+
+  @override
+  String get oldStyle => 'Старый стиль';
+
+  @override
+  String get newStyle => 'Новый стиль';
+
+  @override
+  String get yesterday => 'Вчера';
+
+  @override
+  String get tomorrow => 'Завтра';
+
+  @override
+  String get fastingDay => 'Постный день';
+
+  @override
+  String toneNumber(int number) {
+    return 'Глас $number-й';
+  }
+
+  @override
   String get todayEvents => 'Сегодня';
 
   @override

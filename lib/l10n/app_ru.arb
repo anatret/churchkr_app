@@ -8,6 +8,18 @@
   "saints": "Святые",
   "textsOfTheDay": "Чтения дня",
   "calendar": "Календарь",
+  "orthodoxCalendar": "Православный церковный календарь",
+  "oldStyle": "Старый стиль",
+  "newStyle": "Новый стиль",
+  "yesterday": "Вчера",
+  "tomorrow": "Завтра",
+  "fastingDay": "Постный день",
+  "toneNumber": "Глас {number}-й",
+  "@toneNumber": {
+    "placeholders": {
+      "number": { "type": "int" }
+    }
+  },
   "todayEvents": "Сегодня",
   "icons": "Иконы",
   "dayDescription": "О дне",

@@ -148,6 +148,48 @@ abstract class AppLocalizations {
   /// **'Calendar'**
   String get calendar;
 
+  /// No description provided for @orthodoxCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Orthodox Church Calendar'**
+  String get orthodoxCalendar;
+
+  /// No description provided for @oldStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Old calendar'**
+  String get oldStyle;
+
+  /// No description provided for @newStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'New calendar'**
+  String get newStyle;
+
+  /// No description provided for @yesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get yesterday;
+
+  /// No description provided for @tomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get tomorrow;
+
+  /// No description provided for @fastingDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Fasting day'**
+  String get fastingDay;
+
+  /// No description provided for @toneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Tone {number}'**
+  String toneNumber(int number);
+
   /// No description provided for @todayEvents.
   ///
   /// In en, this message translates to:

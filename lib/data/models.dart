@@ -15,17 +15,19 @@ class AzbykaText {
 }
 
 class AzbykaSaint {
-  const AzbykaSaint({required this.name, this.year});
+  const AzbykaSaint({required this.name, this.year, this.url});
 
   final String name;
   final String? year;
+  final String? url;
 }
 
 class AzbykaImage {
-  const AzbykaImage({required this.title, required this.url});
+  const AzbykaImage({required this.title, required this.url, this.href});
 
   final String title;
   final String url;
+  final String? href;
 }
 
 class AzbykaHoliday {
@@ -47,6 +49,7 @@ class AzbykaDay {
     this.week,
     this.tone,
     this.fastingNote,
+    this.weekColor,
     this.description,
     required this.images,
     required this.saints,
@@ -57,8 +60,9 @@ class AzbykaDay {
   final String dateLabel;
   final bool fasting;
   final String? week;
-  final String? tone;
+  final int? tone;
   final String? fastingNote;
+  final String? weekColor;
   final String? description;
   final List<AzbykaImage> images;
   final List<AzbykaSaint> saints;
