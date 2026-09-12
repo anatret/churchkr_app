@@ -109,7 +109,17 @@ class AzbykaClient {
       parsedHtml.holidays,
     );
     final images = parsePresentationImages(imgTags);
-    final saints = parsedHtml.saints;
+    final saints = mergeSaints(
+      fromPresentations: parsedHtml.saints,
+      fromCache: parseSaintGroupsJson(abstractDate['saintsGroupAbstractDate']),
+      images: images,
+    );
+    final hymnRefs = parseIdRefs(abstractDate['tropariaOrKontakia']);
+    final canonRefs = parseIdRefs(abstractDate['canonsOrAkathists']);
+    final ladyIconRefs = parseIdRefs(
+      abstractDate['iconsOfOurLadyAbstractDates'],
+      urlPrefix: '$azbykaOrigin/days/ikona-',
+    );
 
     final week = dayType?.week;
     final fasting = dayType?.fasting ?? parsedHtml.fasting;
@@ -120,6 +130,17 @@ class AzbykaClient {
       throw AzbykaException('Could not load calendar day');
     }
 
+    final extras = await Future.wait([
+      _enrichSaints(saints),
+      _loadHymns(hymnRefs),
+      _loadCanons(canonRefs),
+      _loadReadings(texts),
+    ]);
+    final enrichedSaints = extras[0] as List<AzbykaSaint>;
+    final hymns = extras[1] as List<AzbykaHymn>;
+    final canons = extras[2] as List<AzbykaCanon>;
+    final readings = extras[3] as List<AzbykaText>;
+
     return AzbykaDay(
       dateLabel: dateKey,
       fasting: fasting,
@@ -128,10 +149,27 @@ class AzbykaClient {
       fastingNote: fastingNote,
       weekColor: dayType?.weekColor,
       images: images,
-      saints: saints,
+      saints: enrichedSaints,
       holidays: holidays,
-      texts: texts,
+      texts: [
+        ...readings,
+        ...texts.where((item) => item.type != 1),
+      ],
+      hymnRefs: hymnRefs,
+      canonRefs: canonRefs,
+      ladyIconRefs: ladyIconRefs,
+      hymns: hymns,
+      canons: canons,
     );
+  }
+
+  Future<Map<String, dynamic>?> loadSaintEntity({
+    required int id,
+    required bool isGroup,
+  }) async {
+    await ensureToken();
+    final path = isGroup ? 'saints_groups/$id' : 'saints/$id';
+    return _tryFetchJson(Uri.parse('$_base/$path'), auth: true);
   }
 
   Future<AzbykaText> loadText(int id) async {
@@ -190,5 +228,90 @@ class AzbykaClient {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<List<AzbykaSaint>> _enrichSaints(List<AzbykaSaint> saints) async {
+    final pending = saints
+        .where(
+          (saint) =>
+              saint.id != null &&
+              saint.id! > 0 &&
+              (saint.imageUrl == null || saint.imageUrl!.isEmpty),
+        )
+        .take(20)
+        .toList();
+    if (pending.isEmpty) return saints;
+
+    final fetched = await Future.wait(
+      pending.map((saint) async {
+        final json = await loadSaintEntity(
+          id: saint.id!,
+          isGroup: saint.isGroup,
+        );
+        if (json == null) return saint;
+        return applySaintJson(saint, json);
+      }),
+    );
+    final byId = {
+      for (final saint in fetched)
+        if (saint.id != null) saint.id!: saint,
+    };
+    return [
+      for (final saint in saints) byId[saint.id] ?? saint,
+    ];
+  }
+
+  Future<List<AzbykaHymn>> _loadHymns(List<AzbykaRef> refs) async {
+    return _loadByRefs(
+      refs,
+      'troparia_or_kontakias',
+      parseHymnJson,
+      limit: 30,
+    );
+  }
+
+  Future<List<AzbykaCanon>> _loadCanons(List<AzbykaRef> refs) async {
+    return _loadByRefs(
+      refs,
+      'canons_or_akathists',
+      parseCanonJson,
+      limit: 25,
+    );
+  }
+
+  Future<List<AzbykaText>> _loadReadings(List<AzbykaText> texts) async {
+    final readings = texts.where((item) => item.type == 1 && item.id > 0).toList();
+    if (readings.isEmpty) return const [];
+    final loaded = await Future.wait(
+      readings.map((item) async {
+        try {
+          return await loadText(item.id);
+        } catch (_) {
+          return item;
+        }
+      }),
+    );
+    return loaded;
+  }
+
+  Future<List<T>> _loadByRefs<T>(
+    List<AzbykaRef> refs,
+    String collection,
+    T Function(Map<String, dynamic>) parse, {
+    required int limit,
+  }) async {
+    final slice = refs.where((ref) => ref.id > 0).take(limit).toList();
+    if (slice.isEmpty) return const [];
+    final loaded = await Future.wait(
+      slice.map((ref) async {
+        final json = await _tryFetchJson(
+          Uri.parse('$_base/$collection/${ref.id}'),
+          auth: true,
+        );
+        if (json == null) return null;
+        return parse(json);
+      }),
+    );
+    return loaded.whereType<T>().toList();
   }
 }

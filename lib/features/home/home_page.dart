@@ -3,6 +3,8 @@ import 'package:churchkr/core/theme.dart';
 import 'package:churchkr/data/azbyka_client.dart';
 import 'package:churchkr/data/azbyka_day_parser.dart';
 import 'package:churchkr/data/models.dart';
+import 'package:churchkr/features/home/day_liturgy.dart';
+import 'package:churchkr/features/home/saint_page.dart';
 import 'package:churchkr/features/widgets/chrome.dart';
 import 'package:churchkr/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -112,10 +114,40 @@ class _HomePageState extends State<HomePage> {
                     day: _day!,
                     onSelect: _selectDay,
                   ),
-                  const SizedBox(height: 16),
-                  _SectionLabel(l10n.todayEvents),
-                  const SizedBox(height: 8),
-                  _EventsCard(day: _day!),
+                  if (_readings(_day!).isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _SectionLabel(l10n.textsOfTheDay),
+                    const SizedBox(height: 8),
+                    DayReadingsCard(readings: _readings(_day!)),
+                  ],
+                  if (_day!.canons.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _SectionLabel(l10n.canonsOfTheDay),
+                    const SizedBox(height: 8),
+                    DayCanonsCard(canons: _day!.canons),
+                  ],
+                  if (_day!.hymns.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _SectionLabel(l10n.hymnsOfTheDay),
+                    const SizedBox(height: 8),
+                    DayHymnsCard(hymns: _day!.hymns),
+                  ],
+                  if (_day!.holidays.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _SectionLabel(l10n.feasts),
+                    const SizedBox(height: 8),
+                    _FeastsCard(holidays: _day!.holidays),
+                  ],
+                  if (_day!.saints.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _SectionLabel(l10n.saints),
+                    const SizedBox(height: 8),
+                    _SaintsCard(saints: _day!.saints),
+                  ],
+                  if (_day!.holidays.isEmpty && _day!.saints.isEmpty) ...[
+                    const SizedBox(height: 16),
+                    _GlassCard(child: Text(l10n.noEventsToday)),
+                  ],
                   if (_description(_day!) != null) ...[
                     const SizedBox(height: 16),
                     _SectionLabel(l10n.dayDescription),
@@ -165,6 +197,10 @@ class _HomePageState extends State<HomePage> {
     ];
     if (parts.isEmpty) return null;
     return parts.join('\n\n');
+  }
+
+  List<AzbykaText> _readings(AzbykaDay day) {
+    return day.texts.where((item) => item.type == 1).toList();
   }
 }
 
@@ -667,25 +703,13 @@ class _DayCell extends StatelessWidget {
   }
 }
 
-class _EventsCard extends StatelessWidget {
-  const _EventsCard({required this.day});
+class _FeastsCard extends StatelessWidget {
+  const _FeastsCard({required this.holidays});
 
-  final AzbykaDay day;
+  final List<AzbykaHoliday> holidays;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final holidays = day.holidays
-        .where((item) => item.title.trim().isNotEmpty)
-        .toList();
-    final saints = day.saints
-        .where((item) => item.name.trim().isNotEmpty)
-        .toList();
-
-    if (holidays.isEmpty && saints.isEmpty) {
-      return _GlassCard(child: Text(l10n.noEventsToday));
-    }
-
     return _GlassCard(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
@@ -706,22 +730,63 @@ class _EventsCard extends StatelessWidget {
                   ? null
                   : () => _openUrl(holiday.url!),
             ),
-          if (holidays.isNotEmpty && saints.isNotEmpty)
-            const Divider(height: 8, indent: 16, endIndent: 16),
+        ],
+      ),
+    );
+  }
+}
+
+class _SaintsCard extends StatelessWidget {
+  const _SaintsCard({required this.saints});
+
+  final List<AzbykaSaint> saints;
+
+  @override
+  Widget build(BuildContext context) {
+    return _GlassCard(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        children: [
           for (final saint in saints)
             ListTile(
-              leading: const Icon(Icons.auto_awesome_outlined,
-                  color: ChurchColors.secondary),
+              leading: _SaintAvatar(saint: saint),
               title: Text(saint.name),
               subtitle: saint.year == null || saint.year!.isEmpty
                   ? null
                   : Text(saint.year!),
-              onTap: saint.url == null || saint.url!.isEmpty
-                  ? null
-                  : () => _openUrl(saint.url!),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => SaintPage(saint: saint),
+                ),
+              ),
             ),
         ],
       ),
+    );
+  }
+}
+
+class _SaintAvatar extends StatelessWidget {
+  const _SaintAvatar({required this.saint});
+
+  final AzbykaSaint saint;
+
+  @override
+  Widget build(BuildContext context) {
+    final url = saint.imageUrl;
+    if (url == null || url.isEmpty) {
+      return CircleAvatar(
+        backgroundColor: ChurchColors.alternate,
+        child: Icon(
+          saint.isGroup ? Icons.groups_outlined : Icons.auto_awesome_outlined,
+          color: ChurchColors.secondary,
+          size: 20,
+        ),
+      );
+    }
+    return CircleAvatar(
+      backgroundColor: ChurchColors.alternate,
+      backgroundImage: CachedNetworkImageProvider(url),
     );
   }
 }

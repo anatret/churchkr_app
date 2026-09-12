@@ -28,7 +28,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get saints => '성인';
 
   @override
-  String get textsOfTheDay => '오늘의 독서';
+  String get feasts => '축일';
+
+  @override
+  String get openOnAzbyka => 'azbyka.ru에서 열기';
+
+  @override
+  String get textsOfTheDay => '성경 독서';
+
+  @override
+  String get hymnsOfTheDay => '트로파리온 · 콘타키온 · 기도';
+
+  @override
+  String get canonsOfTheDay => '카논과 아카티스트';
+
+  @override
+  String get listenAudio => '듣기';
 
   @override
   String get calendar => '달력';

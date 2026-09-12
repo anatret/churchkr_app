@@ -136,11 +136,41 @@ abstract class AppLocalizations {
   /// **'Saints'**
   String get saints;
 
+  /// No description provided for @feasts.
+  ///
+  /// In en, this message translates to:
+  /// **'Feasts'**
+  String get feasts;
+
+  /// No description provided for @openOnAzbyka.
+  ///
+  /// In en, this message translates to:
+  /// **'Open on azbyka.ru'**
+  String get openOnAzbyka;
+
   /// No description provided for @textsOfTheDay.
   ///
   /// In en, this message translates to:
-  /// **'Readings of the day'**
+  /// **'Holy Scripture readings'**
   String get textsOfTheDay;
+
+  /// No description provided for @hymnsOfTheDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Troparia, kontakia, prayers'**
+  String get hymnsOfTheDay;
+
+  /// No description provided for @canonsOfTheDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Canons and akathists'**
+  String get canonsOfTheDay;
+
+  /// No description provided for @listenAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen'**
+  String get listenAudio;
 
   /// No description provided for @calendar.
   ///

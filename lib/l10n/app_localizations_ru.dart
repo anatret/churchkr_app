@@ -28,7 +28,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get saints => 'Святые';
 
   @override
-  String get textsOfTheDay => 'Чтения дня';
+  String get feasts => 'Праздники';
+
+  @override
+  String get openOnAzbyka => 'Открыть на azbyka.ru';
+
+  @override
+  String get textsOfTheDay => 'Чтения Священного Писания';
+
+  @override
+  String get hymnsOfTheDay => 'Тропари, кондаки, молитвы';
+
+  @override
+  String get canonsOfTheDay => 'Каноны и акафисты';
+
+  @override
+  String get listenAudio => 'Слушать';
 
   @override
   String get calendar => 'Календарь';
